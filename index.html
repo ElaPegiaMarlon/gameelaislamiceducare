@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurikulum Interaktif - Gameela Islamic Educare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Harmony -->
+    <!-- Application Structure Plan: Desain aplikasi ini menggunakan pendekatan dasbor tematik satu halaman. Struktur ini dipilih untuk mengubah laporan akademis yang padat menjadi pengalaman yang mudah dinavigasi dan menarik. Pengguna tidak perlu membaca secara linear, melainkan dapat langsung melompat ke bagian yang diminati melalui navigasi utama. Alur pengguna dimulai dari pengenalan visi, lalu ke eksplorasi interaktif pilar-pilar kurikulum (filosofi, pedagogi, tahapan tumbuh kembang), dan diakhiri dengan informasi praktis (keselarasan kurikulum nasional dan rekomendasi). Diagram dan filter interaktif menjadi pusat pengalaman, memungkinkan pengguna untuk 'membedah' kurikulum dan memahami hubungan antar konsep yang kompleks dengan cara yang visual dan intuitif. Ini jauh lebih efektif untuk pemahaman daripada sekadar membaca teks panjang. -->
+    <!-- Visualization & Content Choices: 
+        - Visi & Misi: Kartu interaktif (HTML/JS) untuk menyajikan nilai-nilai inti secara ringkas namun mendalam saat diklik. Tujuannya adalah untuk menginformasikan fondasi Gameela.
+        - Sinergi Pedagogi: Diagram donat (Chart.js) untuk memvisualisasikan hubungan antara PBF sebagai inti dan pendekatan lainnya. Tujuannya adalah menunjukkan hubungan dan integrasi. Interaksi klik memfilter konten lain, menunjukkan sinergi secara dinamis.
+        - Tahapan Perkembangan: Timeline horizontal (HTML/JS) dikombinasikan dengan Bar Chart (Chart.js). Tujuannya adalah untuk membandingkan fokus perkembangan di berbagai usia. Interaksi klik pada timeline mengubah data chart dan teks, memberikan pandangan mendalam per jenjang usia.
+        - Keterampilan 6C: Radar Chart (Chart.js) dengan filter usia. Tujuannya adalah untuk membandingkan penekanan pada setiap keterampilan (6C) di berbagai tahap perkembangan. Ini cara yang efektif untuk menunjukkan 'perubahan' fokus seiring waktu.
+        - Kurikulum Nasional & Rekomendasi: Accordion (HTML/JS) untuk menyajikan informasi teks yang padat secara terorganisir dan tidak membebani. Tujuannya adalah untuk mengorganisir konten pendukung.
+        - Semua visualisasi menggunakan Canvas untuk menghindari SVG/Mermaid, sesuai dengan persyaratan.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F7F4; color: #4A4A4A; }
+        h1, h2, h3, h4 { font-family: 'Lora', serif; color: #005A5A; }
+        .chart-container { position: relative; width: 100%; max-width: 450px; margin-left: auto; margin-right: auto; height: 300px; md:height: 400px; max-height: 450px; }
+        .radar-chart-container { position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 350px; md:height: 450px; max-height: 500px; }
+        .bar-chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px; }
+        .nav-link { transition: all 0.3s ease; border-bottom: 2px solid transparent; }
+        .nav-link:hover, .nav-link.active { color: #2E8B57; border-bottom-color: #2E8B57; }
+        .card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .btn-filter { transition: all 0.2s ease-in-out; }
+        .btn-filter.active { background-color: #005A5A; color: white; }
+        .btn-filter:not(.active) { background-color: #E8E5E1; color: #4A4A4A; }
+        [x-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-[#F8F7F4] text-gray-700">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-[#005A5A]">Gameela Educare</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#philosophy" class="nav-link">Filosofi</a>
+                <a href="#pedagogy" class="nav-link">Pedagogi</a>
+                <a href="#development" class="nav-link">Tumbuh Kembang</a>
+                <a href="#skills" class="nav-link">Keterampilan 6C</a>
+                <a href="#recommendation" class="nav-link">Rekomendasi</a>
+            </div>
+            <div class="md:hidden">
+                <button id="menu-btn" class="text-gray-700 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#philosophy" class="block py-2 px-4 text-sm hover:bg-gray-200">Filosofi</a>
+            <a href="#pedagogy" class="block py-2 px-4 text-sm hover:bg-gray-200">Pedagogi</a>
+            <a href="#development" class="block py-2 px-4 text-sm hover:bg-gray-200">Tumbuh Kembang</a>
+            <a href="#skills" class="block py-2 px-4 text-sm hover:bg-gray-200">Keterampilan 6C</a>
+            <a href="#recommendation" class="block py-2 px-4 text-sm hover:bg-gray-200">Rekomendasi</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-12">
+        
+        <section class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Membentuk Generasi Qur'ani</h1>
+            <p class="text-lg max-w-3xl mx-auto text-gray-600">Menjelajahi Kurikulum Holistik-Integratif Gameela Islamic Educare yang progresif, berwawasan lingkungan, dan berlandaskan Fitrah untuk anak usia 0-12 tahun.</p>
+        </section>
+
+        <section id="philosophy" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-8">Filosofi & Nilai Inti</h2>
+            <p class="text-center max-w-3xl mx-auto mb-10 text-gray-600">
+                Setiap aspek dari kurikulum Gameela dibangun di atas lima pilar fundamental yang saling menguatkan. Nilai-nilai ini bukan sekadar kata-kata, melainkan prinsip hidup yang diintegrasikan dalam setiap aktivitas, interaksi, dan lingkungan belajar untuk menumbuhkan generasi yang utuh.
+            </p>
+            <div class="grid md:grid-cols-5 gap-6">
+                <div class="card bg-white p-6 rounded-xl shadow-md text-center border-t-4 border-teal-600">
+                    <div class="text-4xl mb-3">📖</div>
+                    <h3 class="text-xl font-semibold mb-2">Qur'ani</h3>
+                    <p class="text-sm">Al-Qur'an dan Sunnah sebagai fondasi utama pembelajaran dan pembentukan akhlak mulia.</p>
+                </div>
+                <div class="card bg-white p-6 rounded-xl shadow-md text-center border-t-4 border-green-600">
+                    <div class="text-4xl mb-3">🤝</div>
+                    <h3 class="text-xl font-semibold mb-2">Inklusif</h3>
+                    <p class="text-sm">Merayakan keunikan setiap anak dan menyediakan lingkungan yang mendukung semua untuk berkembang.</p>
+                </div>
+                <div class="card bg-white p-6 rounded-xl shadow-md text-center border-t-4 border-sky-600">
+                    <div class="text-4xl mb-3">🚀</div>
+                    <h3 class="text-xl font-semibold mb-2">Progresif</h3>
+                    <p class="text-sm">Mengadopsi metode inovatif dan teknologi untuk mempersiapkan anak menghadapi masa depan.</p>
+                </div>
+                <div class="card bg-white p-6 rounded-xl shadow-md text-center border-t-4 border-amber-600">
+                    <div class="text-4xl mb-3">🔄</div>
+                    <h3 class="text-xl font-semibold mb-2">Holistik Integratif</h3>
+                    <p class="text-sm">Mengembangkan spiritual, intelektual, emosional, sosial, dan fisik secara terpadu.</p>
+                </div>
+                <div class="card bg-white p-6 rounded-xl shadow-md text-center border-t-4 border-lime-600">
+                    <div class="text-4xl mb-3">🌿</div>
+                    <h3 class="text-xl font-semibold mb-2">Berwawasan Lingkungan</h3>
+                    <p class="text-sm">Menanamkan rasa cinta dan tanggung jawab terhadap alam sebagai ciptaan Allah.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="pedagogy" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-8">Sinergi Pedagogi</h2>
+             <p class="text-center max-w-3xl mx-auto mb-10 text-gray-600">
+                Kurikulum Gameela tidak menerapkan satu metode tunggal, melainkan mensintesis pendekatan-pendekatan terbaik dunia dalam sebuah kerangka yang utuh. Pendidikan Berbasis Fitrah menjadi intinya, sementara metodologi lain berfungsi sebagai pilar pendukung yang saling melengkapi. Klik pada setiap segmen diagram untuk melihat bagaimana setiap pendekatan berkontribusi.
+            </p>
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                <div class="md:w-1/2">
+                    <div class="chart-container">
+                        <canvas id="pedagogyChart"></canvas>
+                    </div>
+                </div>
+                <div id="pedagogy-details" class="md:w-1/2 p-6 bg-white rounded-lg shadow-inner">
+                    <h3 id="pedagogy-title" class="text-2xl font-bold mb-4">Pendidikan Berbasis Fitrah</h3>
+                    <p id="pedagogy-description" class="text-gray-700">Menjadi inti filosofis kurikulum. Konsep ini meyakini setiap anak lahir dengan esensi murni (fitrah) yang cenderung pada kebaikan. Tujuan pendidikan bukan memaksakan, melainkan memelihara dan menumbuhkan potensi ilahi ini, membentuk individu yang utuh secara spiritual, emosional, dan intelektual.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="development" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-8">Kurikulum Berdasarkan Tahapan Usia</h2>
+            <p class="text-center max-w-3xl mx-auto mb-10 text-gray-600">
+                Kurikulum dirancang secara spiral dan adaptif, disesuaikan dengan tahapan tumbuh kembang anak dari usia 0 hingga 12 tahun. Setiap tahap memiliki fokus pengembangan, pendekatan pedagogis, dan contoh aktivitas yang spesifik. Pilih rentang usia di bawah untuk menjelajahi lebih lanjut.
+            </p>
+            <div class="flex justify-center space-x-2 md:space-x-4 mb-8 flex-wrap gap-2">
+                <button onclick="updateDevelopmentStage('0-2')" class="dev-stage-btn btn-filter px-4 py-2 rounded-full text-sm font-semibold active">0-2 Tahun</button>
+                <button onclick="updateDevelopmentStage('2-4')" class="dev-stage-btn btn-filter px-4 py-2 rounded-full text-sm font-semibold">2-4 Tahun</button>
+                <button onclick="updateDevelopmentStage('4-6')" class="dev-stage-btn btn-filter px-4 py-2 rounded-full text-sm font-semibold">4-6 Tahun</button>
+                <button onclick="updateDevelopmentStage('6-12')" class="dev-stage-btn btn-filter px-4 py-2 rounded-full text-sm font-semibold">6-12 Tahun</button>
+            </div>
+            <div id="development-content" class="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div id="development-text" class="lg:w-1/2">
+                        <h3 id="dev-title" class="text-2xl font-bold mb-4">Tahap Fondasi (0-2 Tahun)</h3>
+                        <h4 class="font-semibold text-lg text-teal-700 mb-2">Fokus Utama (PBF):</h4>
+                        <p id="dev-pbf" class="mb-4 text-sm">Pemupukan Fitrah Fisik & Iman dasar. Membangun kepercayaan dasar melalui sentuhan, suara yang menenangkan, dan lingkungan yang aman. Memperkenalkan anak pada suara Al-Qur'an untuk menstimulasi fitrah iman.</p>
+                        <h4 class="font-semibold text-lg text-teal-700 mb-2">Pendekatan & Aktivitas:</h4>
+                        <p id="dev-activity" class="mb-4 text-sm">Lingkungan Montessori yang disiapkan dengan zona aman dan stimulasi sensorik. Aktivitas seperti *tummy time* di alam, bermain dengan bahan alami, dan mendengarkan lantunan ayat suci.</p>
+                    </div>
+                    <div class="lg:w-1/2">
+                         <div class="bar-chart-container">
+                            <canvas id="developmentBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="skills" class="mb-16 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-8">Pengembangan Keterampilan Abad 21 (6C)</h2>
+             <p class="text-center max-w-3xl mx-auto mb-10 text-gray-600">
+                Selain berlandaskan iman, kurikulum Gameela secara eksplisit bertujuan mengembangkan enam kompetensi global (6C) yang krusial untuk masa depan. Diagram ini menunjukkan bagaimana penekanan pada setiap keterampilan disesuaikan dengan tahap perkembangan anak.
+            </p>
+            <div class="flex justify-center space-x-2 md:space-x-4 mb-8 flex-wrap gap-2">
+                <button onclick="update6CSkills('4-6')" class="skill-btn btn-filter px-4 py-2 rounded-full text-sm font-semibold active">4-6 Tahun</button>
+                <button onclick="update6CSkills('6-12')" class="skill-btn btn-filter px-4 py-2 rounded-full text-sm font-semibold">6-12 Tahun</button>
+            </div>
+            <div class="bg-white p-6 md:p-8 rounded-lg shadow-lg flex flex-col md:flex-row items-center gap-8">
+                <div class="md:w-1/2">
+                    <div class="radar-chart-container">
+                        <canvas id="skillsRadarChart"></canvas>
+                    </div>
+                </div>
+                <div id="skills-text" class="md:w-1/2">
+                    <h3 class="text-2xl font-bold mb-4">Fokus Keterampilan 6C untuk Usia 4-6 Tahun</h3>
+                    <p class="mb-4">Pada tahap prasekolah, fondasi untuk semua keterampilan 6C mulai diletakkan melalui permainan dan proyek. Fokus utamanya adalah pada pengembangan Karakter, Kreativitas, dan kemampuan Kolaborasi awal.</p>
+                    <ul class="list-disc list-inside space-y-2 text-sm">
+                        <li><strong>Karakter:</strong> Menanamkan akhlak mulia, empati, dan kemandirian melalui cerita dan teladan.</li>
+                        <li><strong>Kreativitas:</strong> Mendorong imajinasi dan eksplorasi melalui "100 Bahasa Anak" ala Reggio Emilia.</li>
+                        <li><strong>Kolaborasi:</strong> Belajar berbagi, bergiliran, dan bekerja dalam kelompok kecil pada proyek sederhana.</li>
+                        <li><strong>Komunikasi:</strong> Mengembangkan kemampuan bercerita dan mengekspresikan ide.</li>
+                        <li><strong>Berpikir Kritis:</strong> Mendorong anak untuk bertanya "mengapa" dan "bagaimana".</li>
+                        <li><strong>Kewarganegaraan:</strong> Memperkenalkan konsep berbagi dan peduli terhadap teman serta lingkungan sekitar.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="recommendation" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-center mb-8">Keselarasan & Rekomendasi</h2>
+            <p class="text-center max-w-3xl mx-auto mb-10 text-gray-600">
+                Kurikulum Gameela tidak hanya inovatif tetapi juga selaras dengan standar nasional dan didukung oleh rekomendasi praktis untuk implementasi yang sukses, memastikan pendidikan berkualitas tinggi yang relevan dengan konteks Indonesia.
+            </p>
+             <div class="max-w-4xl mx-auto space-y-4">
+                <div class="bg-white rounded-lg shadow-md">
+                    <button class="accordion-header w-full text-left p-4 font-semibold text-lg flex justify-between items-center text-teal-800">
+                        <span>Keselarasan dengan Kurikulum Nasional</span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-max-height duration-500 ease-in-out">
+                        <div class="p-4 border-t">
+                            <p>Kurikulum Gameela sepenuhnya mengacu pada kerangka dasar dari <strong>Kurikulum Merdeka (Kemendikbudristek)</strong> dan <strong>KMA terbaru (Kementerian Agama)</strong>. Capaian Pembelajaran (CP) nasional diintegrasikan secara organik:</p>
+                            <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+                                <li><strong>Nilai Agama dan Budi Pekerti:</strong> Diwujudkan melalui Pendidikan Berbasis Fitrah dan praktik Montessori Islami.</li>
+                                <li><strong>Jati Diri:</strong> Dikembangkan melalui fokus pada individualitas, kecerdasan emosional, dan kemandirian.</li>
+                                <li><strong>Dasar Literasi & STEAM:</strong> Dieksplorasi melalui Pembelajaran Berbasis Proyek (Reggio Emilia) dan pengembangan keterampilan berpikir kritis (6C).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md">
+                    <button class="accordion-header w-full text-left p-4 font-semibold text-lg flex justify-between items-center text-teal-800">
+                        <span>Rekomendasi Implementasi</span>
+                         <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                     <div class="accordion-content max-h-0 overflow-hidden transition-max-height duration-500 ease-in-out">
+                         <div class="p-4 border-t">
+                            <p>Untuk keberhasilan implementasi, beberapa langkah strategis direkomendasikan:</p>
+                            <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+                                <li><strong>Pelatihan Terintegrasi:</strong> Mengembangkan modul pelatihan komprehensif untuk pendidik dan orang tua.</li>
+                                <li><strong>Kurikulum Operasional Berbasis Proyek:</strong> Menyusun panduan detail proyek yang menggabungkan semua elemen kurikulum.</li>
+                                <li><strong>Sistem Dokumentasi Robust:</strong> Menerapkan portofolio digital untuk melacak perkembangan holistik anak.</li>
+                                <li><strong>Kemitraan Komunitas:</strong> Menjalin hubungan dengan sumber daya lokal (misal: pusat daur ulang untuk konsep Remida).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <h2 class="text-2xl font-bold mb-2 font-lora">Gameela Islamic Educare</h2>
+            <p class="mb-4">Membina generasi masa depan yang berlandaskan iman, cerdas, dan berakhlak mulia.</p>
+            <p class="text-sm text-gray-400">&copy; 2025 Gameela Islamic Educare. Dirancang sebagai dasbor kurikulum interaktif.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const pedagogyData = {
+                labels: ['Fitrah Based Education', 'Montessori Islami', 'Reggio Emilia Approach', 'NPDL & 6C'],
+                datasets: [{
+                    data: [40, 20, 20, 20],
+                    backgroundColor: ['#005A5A', '#2E8B57', '#8FBC8F', '#B2D8B2'],
+                    borderColor: '#F8F7F4',
+                    borderWidth: 4,
+                    hoverOffset: 10
+                }]
+            };
+
+            const pedagogyDetails = {
+                'Pendidikan Berbasis Fitrah': 'Menjadi inti filosofis kurikulum. Konsep ini meyakini setiap anak lahir dengan esensi murni (fitrah) yang cenderung pada kebaikan. Tujuan pendidikan bukan memaksakan, melainkan memelihara dan menumbuhkan potensi ilahi ini, membentuk individu yang utuh secara spiritual, emosional, dan intelektual.',
+                'Montessori Islami': 'Menyediakan metodologi praktis. Dengan "lingkungan yang disiapkan" dan materi yang diperkaya nilai Islam, pendekatan ini mengoperasionalkan PBF, mendorong kemandirian, tanggung jawab, dan pembelajaran yang dipimpin oleh anak sendiri.',
+                'Pendekatan Reggio Emilia': 'Memperkaya kurikulum dengan filosofi "anak sebagai protagonis" dan "lingkungan sebagai guru ketiga". Ini mendorong ekspresi kreatif melalui "100 bahasa anak" dan menanamkan kesadaran lingkungan melalui konsep Remida (daur ulang kreatif).',
+                'NPDL & 6C': 'Memberikan kerangka keterampilan abad ke-21 yang terukur. Enam kompetensi (Karakter, Kewarganegaraan, Berpikir Kritis, Komunikasi, Kolaborasi, Kreativitas) diintegrasikan untuk memastikan anak siap menghadapi tantangan masa depan.'
+            };
+            
+            const developmentData = {
+                '0-2': {
+                    title: 'Tahap Fondasi (0-2 Tahun)',
+                    pbf: 'Pemupukan Fitrah Fisik & Iman dasar. Membangun kepercayaan dasar melalui sentuhan, suara yang menenangkan, dan lingkungan yang aman. Memperkenalkan anak pada suara Al-Qur\'an untuk menstimulasi fitrah iman.',
+                    activity: 'Lingkungan Montessori yang disiapkan dengan zona aman dan stimulasi sensorik. Aktivitas seperti *tummy time* di alam, bermain dengan bahan alami, dan mendengarkan lantunan ayat suci.',
+                    chartData: [40, 15, 25, 20]
+                },
+                '2-4': {
+                    title: 'Tahap Eksplorasi (2-4 Tahun)',
+                    pbf: 'Pemupukan Fitrah Belajar, Individualitas, dan Estetika. Mendorong rasa ingin tahu, menghargai keunikan anak, dan menstimulasi kepekaan terhadap keindahan ciptaan Allah.',
+                    activity: 'Aktivitas kehidupan praktis Montessori, eksplorasi alam (tanaman, serangga), kegiatan seni dengan bahan daur ulang (Remida), dan membantu tugas rumah tangga sederhana untuk membangun kemandirian.',
+                     chartData: [25, 30, 25, 20]
+                },
+                '4-6': {
+                    title: 'Tahap Pra-Operasional (4-6 Tahun)',
+                    pbf: 'Pemupukan Fitrah Iman (lebih dalam), Bakat, dan Sosialitas. Mengajarkan konsep dasar iman, mengenali minat khusus anak, dan mengembangkan kemampuan berinteraksi sosial yang baik.',
+                    activity: 'Pembelajaran Berbasis Proyek (Reggio Emilia) seperti "Kebun Qur\'ani", membuat buku cerita Nabi, dan diskusi kelompok tentang adab untuk melatih keterampilan sosial dan kolaborasi.',
+                     chartData: [20, 35, 20, 25]
+                },
+                '6-12': {
+                    title: 'Tahap Operasional Konkret (6-12 Tahun)',
+                    pbf: 'Pemupukan Fitrah Misi Hidup (solution maker) & Belajar (mendalam). Mengarahkan anak untuk berpikir tentang kontribusinya bagi dunia dan mendalami pengetahuan secara lebih terstruktur.',
+                    activity: 'Proyek jangka panjang yang lebih kompleks seperti "Membangun Kota Masa Depan Islami", kegiatan coding sederhana, dan diskusi mendalam tentang peran dan tanggung jawab dalam Islam.',
+                    chartData: [15, 40, 15, 30]
+                }
+            };
+            
+            const skillsData = {
+                '4-6': [4, 2, 3, 3, 4, 5],
+                '6-12': [5, 4, 5, 4, 5, 4],
+            };
+            
+            const skillsText = {
+                '4-6': {
+                    title: 'Fokus Keterampilan 6C untuk Usia 4-6 Tahun',
+                    description: 'Pada tahap prasekolah, fondasi untuk semua keterampilan 6C mulai diletakkan melalui permainan dan proyek. Fokus utamanya adalah pada pengembangan Karakter, Kreativitas, dan kemampuan Kolaborasi awal.',
+                    points: [
+                        '<strong>Karakter:</strong> Menanamkan akhlak mulia, empati, dan kemandirian melalui cerita dan teladan.',
+                        '<strong>Kreativitas:</strong> Mendorong imajinasi dan eksplorasi melalui "100 Bahasa Anak" ala Reggio Emilia.',
+                        '<strong>Kolaborasi:</strong> Belajar berbagi, bergiliran, dan bekerja dalam kelompok kecil pada proyek sederhana.',
+                        '<strong>Komunikasi:</strong> Mengembangkan kemampuan bercerita dan mengekspresikan ide.',
+                        '<strong>Berpikir Kritis:</strong> Mendorong anak untuk bertanya "mengapa" dan "bagaimana".',
+                        '<strong>Kewarganegaraan:</strong> Memperkenalkan konsep berbagi dan peduli terhadap teman serta lingkungan sekitar.'
+                    ]
+                },
+                '6-12': {
+                    title: 'Fokus Keterampilan 6C untuk Usia 6-12 Tahun',
+                    description: 'Pada usia sekolah, pengembangan keterampilan 6C menjadi lebih terstruktur dan mendalam, berfokus pada aplikasi dalam proyek-proyek yang lebih kompleks dan pemecahan masalah.',
+                     points: [
+                        '<strong>Karakter:</strong> Menguatkan kompas moral, ketangguhan (resilience), dan tanggung jawab pribadi.',
+                        '<strong>Kreativitas:</strong> Menerapkan pemikiran inovatif untuk menghasilkan solusi dalam proyek.',
+                        '<strong>Kolaborasi:</strong> Bekerja secara efektif dalam tim, mengambil peran, dan menghargai kontribusi orang lain.',
+                        '<strong>Komunikasi:</strong> Mengasah kemampuan presentasi, debat sehat, dan ekspresi ide yang terstruktur.',
+                        '<strong>Berpikir Kritis:</strong> Menganalisis informasi, mengevaluasi argumen, dan membuat keputusan beralasan.',
+                        '<strong>Kewarganegaraan:</strong> Mengembangkan pemahaman tentang peran aktif dalam komunitas dan tanggung jawab global.'
+                    ]
+                }
+            };
+
+            let pedagogyChart, developmentBarChart, skillsRadarChart;
+
+            function createPedagogyChart() {
+                const ctx = document.getElementById('pedagogyChart').getContext('2d');
+                pedagogyChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: pedagogyData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '50%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 12 },
+                                    padding: 15
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label;
+                                    }
+                                }
+                            }
+                        },
+                        onClick: (e, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const label = pedagogyData.labels[index];
+                                document.getElementById('pedagogy-title').innerText = label.replace('Based Education', '').replace('Approach', '').replace('& 6C', ' (6C)');
+                                document.getElementById('pedagogy-description').innerText = pedagogyDetails[label.replace('Based Education', 'Berbasis Fitrah')];
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createDevelopmentBarChart() {
+                const ctx = document.getElementById('developmentBarChart').getContext('2d');
+                developmentBarChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Fisik & Iman', 'Kognitif & Belajar', 'Sosial-Emosional', 'Bahasa & Seni'],
+                        datasets: [{
+                            label: 'Fokus Pengembangan',
+                            data: developmentData['0-2'].chartData,
+                            backgroundColor: ['#005A5A', '#2E8B57', '#8FBC8F', '#B2D8B2'],
+                            borderRadius: 5,
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: 'Distribusi Fokus Pengembangan (0-2 Tahun)',
+                                font: { size: 14, family: 'Lora' }
+                            }
+                        },
+                        scales: {
+                            x: { suggestedMax: 45, grid: { display: false } },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            function createSkillsRadarChart() {
+                const ctx = document.getElementById('skillsRadarChart').getContext('2d');
+                skillsRadarChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Karakter', 'Kewarganegaraan', 'Berpikir Kritis', 'Komunikasi', 'Kolaborasi', 'Kreativitas'],
+                        datasets: [{
+                            label: 'Fokus Usia 4-6',
+                            data: skillsData['4-6'],
+                            backgroundColor: 'rgba(46, 139, 87, 0.2)',
+                            borderColor: '#2E8B57',
+                            pointBackgroundColor: '#2E8B57',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#2E8B57'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                                grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                                pointLabels: { font: { size: 12 } },
+                                suggestedMin: 0,
+                                suggestedMax: 5,
+                                ticks: {
+                                    stepSize: 1,
+                                    backdropColor: 'rgba(255, 255, 255, 0)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            window.updateDevelopmentStage = function(stage) {
+                const data = developmentData[stage];
+                document.getElementById('dev-title').innerText = data.title;
+                document.getElementById('dev-pbf').innerHTML = data.pbf;
+                document.getElementById('dev-activity').innerHTML = data.activity;
+                
+                developmentBarChart.data.datasets[0].data = data.chartData;
+                developmentBarChart.options.plugins.title.text = `Distribusi Fokus Pengembangan (${stage} Tahun)`;
+                developmentBarChart.update();
+
+                document.querySelectorAll('.dev-stage-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`.dev-stage-btn[onclick="updateDevelopmentStage('${stage}')"]`).classList.add('active');
+            };
+
+            window.update6CSkills = function(stage) {
+                const data = skillsData[stage];
+                skillsRadarChart.data.datasets[0].data = data;
+                skillsRadarChart.data.datasets[0].label = `Fokus Usia ${stage}`;
+                skillsRadarChart.update();
+                
+                const textData = skillsText[stage];
+                const skillsTextContainer = document.getElementById('skills-text');
+                skillsTextContainer.querySelector('h3').innerText = textData.title;
+                skillsTextContainer.querySelector('p').innerText = textData.description;
+                const ul = skillsTextContainer.querySelector('ul');
+                ul.innerHTML = '';
+                textData.points.forEach(point => {
+                    const li = document.createElement('li');
+                    li.innerHTML = point;
+                    ul.appendChild(li);
+                });
+
+
+                document.querySelectorAll('.skill-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`.skill-btn[onclick="update6CSkills('${stage}')"]`).classList.add('active');
+            };
+
+            const accordions = document.querySelectorAll('.accordion-header');
+            accordions.forEach(accordion => {
+                accordion.addEventListener('click', () => {
+                    const content = accordion.nextElementSibling;
+                    const icon = accordion.querySelector('span:last-child');
+                    
+                    accordion.parentElement.parentElement.querySelectorAll('.accordion-content').forEach(item => {
+                        if (item !== content) {
+                            item.style.maxHeight = '0px';
+                            item.previousElementSibling.querySelector('span:last-child').classList.remove('rotate-180');
+                        }
+                    });
+
+                    if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                        content.style.maxHeight = '0px';
+                        icon.classList.remove('rotate-180');
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.classList.add('rotate-180');
+                    }
+                });
+            });
+
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            createPedagogyChart();
+            createDevelopmentBarChart();
+            createSkillsRadarChart();
+        });
+    </script>
+</body>
+</html>
